@@ -84,11 +84,11 @@ inline int random(int num, int offset) { //Ëæ»úº¯Êý
 
 struct MatchResult {
 	bool isFind = false;
-	Point2i pos;
+	Point2f pos;
 	double Val = 0.;
 };
 
-MatchResult findTemplate(Mat& _src, Mat& _mytemplate, int _cols, int _rows) {
+MatchResult findTemplate(Mat& _src, Mat& _mytemplate, double thresholdVal) {
 	MatchResult Result;
 
 	int result_cols = _src.cols - _mytemplate.cols + 1;
@@ -106,28 +106,21 @@ MatchResult findTemplate(Mat& _src, Mat& _mytemplate, int _cols, int _rows) {
 
 	//imshow("result", result);
 
-	double minVal;
-	double maxVal;
-
-	Point minLoc;
-	Point maxLoc;
-	Point matchLoc;
+	double minVal, maxVal;
+	Point minLoc, maxLoc, matchLoc;
 
 	minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, Mat());
 
 	if (minVal == maxVal) return Result;
 
-	if (abs(minVal) < 1e-7) {
-		//cout << minVal << endl;
+	//abs(minVal) < 1e-7
+	if (abs(minVal) < thresholdVal) { //
+		cout << abs(minVal) << " < " << thresholdVal << endl;
 		matchLoc = minLoc;
 
 		Result.isFind = true;
 		Result.pos.x = matchLoc.x + _mytemplate.cols / 2.;
 		Result.pos.y = matchLoc.y + _mytemplate.rows / 2.;
-
-		Result.pos.x = random(Result.pos.x, int(0.35 * _cols)); //colsÁÐ
-		Result.pos.y = random(Result.pos.y, int(0.35 * _rows)); //rowsÐÐ
-
 		Result.Val = minVal;
 
 		//circle(_src, Result.pos, 5, Scalar(255, 0, 0), 2, LINE_AA, 0);
@@ -148,7 +141,7 @@ MatchResult findTemplate(Mat& _src, Mat& _mytemplate, int _cols, int _rows) {
 #ifdef MAKELIST
 void TESTonMouse(int event, int x, int y, int flags, void*) {
 	if (event == EVENT_LBUTTONDOWN) {
-		cout << x / (windowSize[1].x - windowSize[0].x) << " " << y / (windowSize[1].y - windowSize[0].y) << endl;
+		cout << x / (windowSize[1].x - windowSize[0].x) << ", " << y / (windowSize[1].y - windowSize[0].y) << ", " << endl;
 	}
 }
 #endif
@@ -191,20 +184,18 @@ inline void click(Point2f p, double offsetX, double offsetY) { //×ø±êÐÎÊ½µ¥»÷
 	return;
 }
 
-int DoAsList(Alist A) {
+inline int DoOnce(string str, double axwratio, double ayhratio, double bxwratio, double byhratio) { //Ö´ÐÐµ¥²½²Ù×÷
+	cout << str;
+	click(axwratio, ayhratio, bxwratio, byhratio);
+	cout << "......Done" << endl << endl;
+	Sleep(random(1500, 300));
+	return 0;
+}
+
+int DoAsList(Alist A) { //°´²½ÖèÇåµ¥Ö´ÐÐ
 	cout << A.n << endl;
 	for (auto& i : A.list) { //Ö´ÐÐÃ¿Ò»²½²Ù×÷
-		cout << i.str;
-		/*mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-			random((i.x2 + i.x1) / 2. * srcroiwidth + windowSize[0].x,
-				(i.x2 - i.x1) / 2. * srcroiwidth * 0.85) * 65536 / srcwidth,
-			random((i.y2 + i.y1) / 2. * srcroiheight + windowSize[0].y,
-				(i.y2 - i.y1) / 2. * srcroiheight * 0.85) * 65536 / srcheight,
-			0, 0);
-		mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);*/
-		click(i.x1, i.y1, i.x2, i.y2);
-		cout << "......Done" << endl << endl;
-		Sleep(random(1500, 300));
+		DoOnce(i.str, i.x1, i.y1, i.x2, i.y2); //Ö´ÐÐµ¥²½²Ù×÷
 	}
 	return 0;
 }
@@ -234,6 +225,7 @@ void getSize(LPCWSTR name) { //¶àÏß³Ìº¯ÊýÊµÊ±»ñÈ¡´°¿ÚÎ»ÖÃºÍ´óÐ¡
 
 		srcroiwidth = windowSize[1].x - windowSize[0].x;
 		srcroiheight = windowSize[1].y - windowSize[0].y;
+
 		Sleep(100);
 	}
 	return;
@@ -271,7 +263,7 @@ int PromptDetect() { //¸÷ÖÖÌáÊ¾µÄ¼ì²â
 		
 		struct Q {
 			Point2f c;
-			float w, h;
+			float w = 0., h = 0.;
 		} temp;
 		vector<Q> center;
 		Point2f confirm;
@@ -486,6 +478,79 @@ int newMap() {
 	return 0;
 }
 
+int oldMeta() { //µµ°¸ÐÅ±ê
+	//DoAsList(AllList[2]);
+
+	MatchResult result0, result1, result2, result3;
+
+	Mat oldMetaOK = imread("oldMetaOK.png");
+	Mat battlePAUSE = imread("battlePAUSE.png");
+	Mat oldMetaAGAIN = imread("oldMetaAGAIN.png");
+	Mat oldMetaCOLLECT = imread("oldMetaCOLLECT.png");
+
+	resize(oldMetaOK, oldMetaOK, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
+	resize(battlePAUSE, battlePAUSE, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
+	resize(oldMetaAGAIN, oldMetaAGAIN, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
+	resize(oldMetaCOLLECT, oldMetaCOLLECT, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
+
+	cvtColor(oldMetaOK, oldMetaOK, COLOR_BGR2GRAY);
+	cvtColor(battlePAUSE, battlePAUSE, COLOR_BGR2GRAY);
+	cvtColor(oldMetaAGAIN, oldMetaAGAIN, COLOR_BGR2GRAY);
+	cvtColor(oldMetaCOLLECT, oldMetaCOLLECT, COLOR_BGR2GRAY);
+
+	//threshold(oldMetaOK, oldMetaOK, 150, 255, THRESH_BINARY);
+	//threshold(oldMetaAGAIN, oldMetaAGAIN, 150, 255, THRESH_BINARY);
+	//threshold(oldMetaCOLLECT, oldMetaCOLLECT, 150, 255, THRESH_BINARY);
+
+	while (true) {
+		if (!ifget) {
+			cout << "thread error" << endl;
+			return -1;
+		}
+		Mat src = hwnd2mat(NULL);
+		if (src.empty()) {
+			cout << "src is empty" << endl;
+			return -1;
+		}
+		Mat src_roi = src(Rect(windowSize[0], windowSize[1])); //½ØÈ¡´°¿Ú
+
+		cvtColor(src_roi, src_roi, COLOR_BGR2GRAY);
+		//threshold(src_roi, src_roi, 150, 255, THRESH_BINARY);
+
+		result0 = findTemplate(src_roi, battlePAUSE, 4e-9);
+		if (result0.isFind) {
+			cout << "continue" << endl;
+			Sleep(2000);
+			continue;
+		}
+
+		result1 = findTemplate(src_roi, oldMetaOK, 8e-10);
+		if (result1.isFind) {
+			DoOnce("µµ°¸ÐÅ±êÕ½¶·Íê³É", 0.776708, 0.872581, 0.910491, 0.946774);
+		}
+
+		result2 = findTemplate(src_roi, oldMetaAGAIN, 2e-9);
+		if (result2.isFind) {
+			DoOnce("µµ°¸ÐÅ±ê¿ªÊ¼ÌôÕ½1", 0.822907, 0.872581, 0.976901, 0.954839);
+			DoOnce("µµ°¸ÐÅ±ê¿ªÊ¼ÌôÕ½2", 0.809432, 0.835484, 0.962464, 0.922581);
+			Sleep(5000);
+		}
+
+		result3 = findTemplate(src_roi, oldMetaCOLLECT, 1e-9);
+		if (result3.isFind) {
+			DoOnce("µµ°¸ÐÅ±êÁìÈ¡½±Àø", 0.820019, 0.869355, 0.977863, 0.958065);
+			DoOnce("µµ°¸ÐÅ±êÁìÈ¡½±Àø", 0.820019, 0.869355, 0.977863, 0.958065);
+			DoOnce("µã»÷µµ°¸ÐÅ±ê", 0.550529, 0.269355, 0.770934, 0.775806);
+			DoOnce("µµ°¸ÐÅ±êÔÙ´Î½âÎö", 0.428296, 0.203226, 0.583253, 0.704839);
+		}
+
+		Sleep(500);
+	}
+	
+
+	return 0;
+}
+
 int main() { //Ö÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯Êý
 	srand((unsigned)time(NULL));
 
@@ -515,8 +580,8 @@ int main() { //Ö÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯Ê
 	getSizet.detach(); //Ïß³Ì·ÖÀë
 	Sleep(500); //µÈ´ý¶àÏß³ÌÖ´ÐÐ
 
-	SetForegroundWindow(FindWindow(NULL, TEXT("±ÌÀ¶º½Ïß"))); //½«±ÌÀ¶º½ÏßÓÎÏ·´°¿ÚÌáÉýÖÁ×îÉÏ
-	Sleep(100);
+	//SetForegroundWindow(FindWindow(NULL, TEXT("±ÌÀ¶º½Ïß"))); //½«±ÌÀ¶º½ÏßÓÎÏ·´°¿ÚÌáÉýÖÁ×îÉÏ
+	//Sleep(100);
 
 	vector<Aclick> tempVQ;
 	ifstream fs;
@@ -551,10 +616,20 @@ int main() { //Ö÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯Ê
 	}
 	fs.close();
 
-	for (auto& i : AllList) {
-		cout << i.n << endl;
-		for (auto& j : i.list) {
-			cout << j.str << " " << j.x1 << j.y1 << endl;
+	cout << "-1.Ìø¹ý" << endl;
+	cout << "1.×Ô¶¯Ë¢µµ°¸ÐÅ±ê" << endl;
+	int choice;
+	cin >> choice;
+
+	SetForegroundWindow(FindWindow(NULL, TEXT("±ÌÀ¶º½Ïß"))); //½«±ÌÀ¶º½ÏßÓÎÏ·´°¿ÚÌáÉýÖÁ×îÉÏ
+	Sleep(100);
+
+	if (choice == -1) {
+
+	}else if (choice == 1) {
+		if (oldMeta() == -1) {
+			cout << "oldMeta error" << endl;
+			return -1;
 		}
 	}
 
@@ -565,7 +640,7 @@ int main() { //Ö÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯ÊýÖ÷º¯Ê
 	//system("pause");
 
 	//newMap();
-	PromptDetect();
+	//PromptDetect();
 	system("pause");
 
 	while (true) { //Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·Ö÷Ñ­»·
