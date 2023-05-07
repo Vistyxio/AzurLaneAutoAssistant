@@ -481,18 +481,23 @@ int newMap() {
 int oldMeta() { //档案信标
 	//DoAsList(AllList[2]);
 
-	MatchResult result0, result1, result2, result3;
+	MatchResult result0, result1, result2, result3, result4;
 
+	Mat MetaPAGE = imread("MetaPAGE.png");
 	Mat oldMetaOK = imread("oldMetaOK.png");
 	Mat battlePAUSE = imread("battlePAUSE.png");
 	Mat oldMetaAGAIN = imread("oldMetaAGAIN.png");
 	Mat oldMetaCOLLECT = imread("oldMetaCOLLECT.png");
 
-	resize(oldMetaOK, oldMetaOK, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
-	resize(battlePAUSE, battlePAUSE, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
-	resize(oldMetaAGAIN, oldMetaAGAIN, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
-	resize(oldMetaCOLLECT, oldMetaCOLLECT, Size(0, 0), double(srcroiwidth) / 1920., double(srcroiheight) / 1080., INTER_CUBIC);
+	double resizeScale = (double(srcroiwidth) / 1920.) > (double(srcroiheight) / 1080.) ? (double(srcroiheight) / 1080.) : (double(srcroiwidth) / 1920.);
 
+	resize(MetaPAGE, MetaPAGE, Size(0, 0), resizeScale, resizeScale, INTER_CUBIC);
+	resize(oldMetaOK, oldMetaOK, Size(0, 0), resizeScale, resizeScale, INTER_CUBIC);
+	resize(battlePAUSE, battlePAUSE, Size(0, 0), resizeScale, resizeScale, INTER_CUBIC);
+	resize(oldMetaAGAIN, oldMetaAGAIN, Size(0, 0), resizeScale, resizeScale, INTER_CUBIC);
+	resize(oldMetaCOLLECT, oldMetaCOLLECT, Size(0, 0), resizeScale, resizeScale, INTER_CUBIC);
+	
+	cvtColor(MetaPAGE, MetaPAGE, COLOR_BGR2GRAY);
 	cvtColor(oldMetaOK, oldMetaOK, COLOR_BGR2GRAY);
 	cvtColor(battlePAUSE, battlePAUSE, COLOR_BGR2GRAY);
 	cvtColor(oldMetaAGAIN, oldMetaAGAIN, COLOR_BGR2GRAY);
@@ -517,10 +522,24 @@ int oldMeta() { //档案信标
 		cvtColor(src_roi, src_roi, COLOR_BGR2GRAY);
 		//threshold(src_roi, src_roi, 150, 255, THRESH_BINARY);
 
-		result0 = findTemplate(src_roi, battlePAUSE, 4e-9);
+		result3 = findTemplate(src_roi, oldMetaCOLLECT, 5e-10);
+		if (result3.isFind) {
+			DoOnce("档案信标领取奖励", 0.820019, 0.869355, 0.977863, 0.958065);
+			DoOnce("档案信标领取奖励", 0.820019, 0.869355, 0.977863, 0.958065);
+			DoOnce("点击档案信标", 0.550529, 0.269355, 0.770934, 0.775806);
+			DoOnce("档案信标再次解析", 0.428296, 0.203226, 0.583253, 0.704839);
+		}
+
+		result4 = findTemplate(src_roi, MetaPAGE, 5e-9);
+		if (result4.isFind) {
+			DoOnce("点击档案信标", 0.550529, 0.269355, 0.770934, 0.775806);
+			DoOnce("档案信标再次解析", 0.428296, 0.203226, 0.583253, 0.704839);
+		}
+
+		result0 = findTemplate(src_roi, battlePAUSE, 2e-9);
 		if (result0.isFind) {
 			cout << "continue" << endl;
-			Sleep(2000);
+			Sleep(4000);
 			continue;
 		}
 
@@ -529,20 +548,13 @@ int oldMeta() { //档案信标
 			DoOnce("档案信标战斗完成", 0.776708, 0.872581, 0.910491, 0.946774);
 		}
 
-		result2 = findTemplate(src_roi, oldMetaAGAIN, 2e-9);
+		result2 = findTemplate(src_roi, oldMetaAGAIN, 3e-9);
 		if (result2.isFind) {
 			DoOnce("档案信标开始挑战1", 0.822907, 0.872581, 0.976901, 0.954839);
 			DoOnce("档案信标开始挑战2", 0.809432, 0.835484, 0.962464, 0.922581);
 			Sleep(5000);
 		}
 
-		result3 = findTemplate(src_roi, oldMetaCOLLECT, 1e-9);
-		if (result3.isFind) {
-			DoOnce("档案信标领取奖励", 0.820019, 0.869355, 0.977863, 0.958065);
-			DoOnce("档案信标领取奖励", 0.820019, 0.869355, 0.977863, 0.958065);
-			DoOnce("点击档案信标", 0.550529, 0.269355, 0.770934, 0.775806);
-			DoOnce("档案信标再次解析", 0.428296, 0.203226, 0.583253, 0.704839);
-		}
 
 		Sleep(500);
 	}
